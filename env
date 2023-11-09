@@ -1,0 +1,3 @@
+PORT=
+#[:password]@][host][:port][/db-number]:
+REDIS_URL='redis://localhost:6379/0'

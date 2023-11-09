@@ -10,19 +10,19 @@ Api Broker to record when a user is born using the rest api method and using the
 #### Get all lastseen
 
 ```http
-  GET /api/lastseen/${id_app}
+  GET /api/ls/lastseen/${id_app}
 ```
 #### Get Online User
 
 ```http
-  GET /api/online/${id_app}
+  GET /api/ls/online/${id_app}
 ```
 
 
 #### Post Seen
 
 ```http
-  GET /api/seen/${id_app}
+  GET /api/ls/seen/${id_app}
 ```
 
 | Parameter | Type     | Description                       |
