@@ -86,7 +86,7 @@ module.exports = {
                 name: name,
                 last_seen: datenow
             })
-            client.expire(`${app}:online:${id}`, 200);
+            client.expire(`${app}:online:${id}`, 10);
             client.hSet(`${app}:lastSeen:byId`, id, datenow);
             client.hSet(`${app}:lastSeen:byName`, name, datenow);
 
