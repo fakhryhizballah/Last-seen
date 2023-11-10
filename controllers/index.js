@@ -134,9 +134,14 @@ module.exports = {
             let lastSeen = await client.hGetAll(`${app}:lastSeen:byName`);
             if (name) {
                 lastSeen = await client.hGet(`${app}:lastSeen:byName`, name);
+                return res.status(200).json({
+                    message: 'success',
+                    data: lastSeen
+                });
             }
             return res.status(200).json({
                 message: 'success',
+                record: Object.keys(lastSeen).length,
                 data: lastSeen
             });
         } catch (error) {
@@ -154,9 +159,14 @@ module.exports = {
             let lastSeen = await client.hGetAll(`${app}:lastSeen:byId`);
             if (id) {
                 lastSeen = await client.hGet(`${app}:lastSeen:byId`, id);
+                return res.status(200).json({
+                    message: 'success',
+                    data: lastSeen
+                });
             }
             return res.status(200).json({
                 message: 'success',
+                record: Object.keys(lastSeen).length,
                 data: lastSeen
             });
         } catch (error) {
