@@ -8,71 +8,6 @@ client.on('error', (error) => {
 });
 client.connect();
 module.exports = {
-    test: async (req, res) => {
-        try {
-            let app = req.params.app;
-            let { id, name } = req.query;
-            let datetime = new Date();
-            // wib
-            datetime.setHours(datetime.getHours() + 7);
-            let datenow = datetime.toISOString().slice(0, 19).replace('T', ' ');
-            let data = {
-                id: id,
-                name: name,
-                last_seen: datetime
-            };
-            // const client = createClient({
-            //     url: process.env.REDIS_URL
-            // });
-            // client.on('error', (error) => {
-            //     console.error(error);
-            // });
-            // client.connect();
-            // client.set(`online:${app}:${id}`, data);
-            // client.expire(`online:${app}:${id}`, 60);
-            // let now = Date.now();
-            // client.zAdd('vehicles', [
-            //     {
-            //         score: 10,
-            //         value: 'car',
-            //     },
-            //     {
-            //         score: 2,
-            //         value: 'bike',
-            //     },
-            // ]);
-            // client.hSet(`online:${app}:${id}`, {
-            //     id: id,
-            //     name: name,
-            //     last_seen: datenow
-            // })
-            // client.expire(`online:${app}:${id}`, 60);
-            // client.lPush('bikes:repairs', 'bike:1');
-            // client.hSet('key', 'field', 'value');
-            // let getHSet = await client.keys('online:lpkp:*');
-            // let keys = await client.keys('online:lpkp:*');
-            // let users = [];
-            // for (let key of keys) {
-            //     let user = await client.hGetAll(key);
-            //     console.log(user);
-            //     users.push(user);
-            //     // users.push(JSON.parse(user));
-            // }
-            // console.log(getHSet);
-            client.quit();
-
-            return res.status(200).json({
-                message: 'success',
-                data: users
-            });
-        } catch (error) {
-            console.log(error);
-            return res.status(500).json({
-                message: 'error',
-                data: error.message
-            });
-        }
-    },
     update: async (req, res) => {
         try {
             let app = req.params.app;
@@ -168,6 +103,33 @@ module.exports = {
                 message: 'success',
                 record: Object.keys(lastSeen).length,
                 data: lastSeen
+            });
+        } catch (error) {
+            console.log(error);
+            return res.status(500).json({
+                message: 'error',
+                data: error.message
+            });
+        }
+    },
+    test: async (req, res) => {
+        try {
+            let app = req.params.app;
+            let ping = await client.ping();
+            console.log(ping);
+            await client.hSet('key', 'field', 'value');
+            await client.hGetAll('key');
+            // let getlist = await client.LRANGE('Uptime:lastseen:001', 0, 4);
+            let index = await client.LLEN('Uptime:lastseen:001');
+            console.log(index);
+            let getlist = await client.LRANGE('Uptime:lastseen:001', index - 1, index);
+            console.log(getlist);
+
+            let down = await client.ZSCORE('Uptime:downtime:001', "2023-11-10");
+            console.log(down);
+            return res.status(200).json({
+                message: 'success',
+                data: null
             });
         } catch (error) {
             console.log(error);
