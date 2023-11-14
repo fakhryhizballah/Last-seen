@@ -1,5 +1,6 @@
 const { createClient } = require('redis');
 const { use } = require('../routes');
+const moment = require('moment');
 const client = createClient({
     url: process.env.REDIS_URL
 });
@@ -16,17 +17,56 @@ module.exports = {
             // wib
             datetime.setHours(datetime.getHours() + 7);
             let datenow = datetime.toISOString().slice(0, 19).replace('T', ' ');
-            let lastOnline = await client.hGet(`${app}:online:${id}`);
-            console.log(lastOnline);
+            client.hSet(`${app}:data:byUser`, name, id);
+            client.hSet(`${app}:data:byId`, id, name);
+            let lastOnline = await client.hGetAll(`${app}:online:${id}`);
+            if (!lastOnline.last_seen) {
+                // console.log('last seen');
+                let lastUp = await client.LRANGE(`${app}:uptime:logUp:${id}`, -1, -1)
+                // console.log(lastUp);
+                if (lastUp.length == 0) {
+                    lastUp = [datenow]
+                }
+                let lastSeen = await client.hGet(`${app}:lastSeen:byId`, id);
+                // console.log(lastSeen);
+                if (lastSeen == null) {
+                    client.hSet(`${app}:lastSeen:byId`, id, datenow);
+                    client.hSet(`${app}:lastSeen:byName`, name, datenow);
+                    lastSeen = datenow;
+                }
+
+                // Konversi string tanggal ke objek waktu menggunakan 'moment'
+                let waktuLastUp = moment(lastUp[0], 'YYYY-MM-DD HH:mm:ss');
+                let waktuLastLog = moment(lastSeen, 'YYYY-MM-DD HH:mm:ss');
+                let waktuSekarang = moment(datenow, 'YYYY-MM-DD HH:mm:ss');
+                let durasiDowntime = moment.duration(waktuSekarang.diff(waktuLastLog));
+                // console.log(`durasi downtime: ${durasiDowntime.hours()} jam, ${durasiDowntime.minutes()} menit, ${durasiDowntime.seconds()} detik.`);
+                // console.log durasiDowntime in seconds
+                // console.log(durasiDowntime.asSeconds());
+                let durasiUptime = moment.duration(waktuLastLog.diff(waktuLastUp));
+                // console.log(`Durasi uptime: ${durasiUptime.hours()} jam, ${durasiUptime.minutes()} menit, ${durasiUptime.seconds()} detik.`);
+                // console.log(durasiUptime.asSeconds());
+                // set downtime
+                client.rPush(`${app}:downtime:logDown:${id}`, lastSeen);
+                let down = await client.ZSCORE(`${app}:downtime:durasi:${id}`, lastSeen.slice(0, 10));
+                let downCount = down + durasiDowntime.asSeconds();
+                client.ZINCRBY(`${app}:downtime:durasi:${id}`, downCount, lastSeen.slice(0, 10));
+                client.hSet(`${app}:downtime:log:${id}`, lastSeen, `${durasiDowntime.hours()} jam, ${durasiDowntime.minutes()} menit, ${durasiDowntime.seconds()} detik.`)
+                // set uptime
+                client.rPush(`${app}:uptime:logUp:${id}`, datenow);
+                let up = await client.ZSCORE(`${app}:uptime:durasi:${id}`, datenow.slice(0, 10));
+                let upCount = up + durasiUptime.asSeconds();
+                client.ZINCRBY(`${app}:uptime:durasi:${id}`, upCount, datenow.slice(0, 10));
+                client.hSet(`${app}:uptime:log:${id}`, datenow, `${durasiUptime.hours()} jam, ${durasiUptime.minutes()} menit, ${durasiUptime.seconds()} detik.`)
+            }
             client.hSet(`${app}:online:${id}`, {
                 id: id,
                 name: name,
                 last_seen: datenow
             })
-            client.expire(`${app}:online:${id}`, 10);
+            client.expire(`${app}:online:${id}`, 20);
             client.hSet(`${app}:lastSeen:byId`, id, datenow);
             client.hSet(`${app}:lastSeen:byName`, name, datenow);
-
             return res.status(200).json({
                 message: 'success',
                 data: null
