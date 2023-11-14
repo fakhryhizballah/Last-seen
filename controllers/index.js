@@ -16,6 +16,8 @@ module.exports = {
             // wib
             datetime.setHours(datetime.getHours() + 7);
             let datenow = datetime.toISOString().slice(0, 19).replace('T', ' ');
+            let lastOnline = await client.hGet(`${app}:online:${id}`);
+            console.log(lastOnline);
             client.hSet(`${app}:online:${id}`, {
                 id: id,
                 name: name,
